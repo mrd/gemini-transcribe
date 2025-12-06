@@ -12,6 +12,7 @@
 	let streamBuffer = '';
 	let transcriptArray: Array<{ timestamp: string; speaker: string; text: string }> = [];
 	let language = 'English';
+	let apiKey = '';
 	let initialized = false;
 	let errorMessage: string | null = null;
 
@@ -20,12 +21,19 @@
 	let copiedToClipboard = false;
 
 	onMount(() => {
-		language = localStorage.getItem('transcriptionLanguage') || 'English';
+		if (typeof window !== 'undefined') {
+			language = localStorage.getItem('transcriptionLanguage') || 'English';
+			apiKey = localStorage.getItem('googleApiKey') || '';
+		}
 		initialized = true;
 	});
 
-	$: if (initialized) {
+	$: if (initialized && typeof window !== 'undefined') {
 		localStorage.setItem('transcriptionLanguage', language);
+	}
+
+	$: if (apiKey !== undefined && typeof window !== 'undefined') {
+		localStorage.setItem('googleApiKey', apiKey);
 	}
 
 	function handleTimestampClick(timestamp: string) {
@@ -93,6 +101,11 @@
 		if (!selectedFile) return;
 		errorMessage = null;
 
+		if (!apiKey.trim()) {
+			errorMessage = 'Please enter your Google API key.';
+			return;
+		}
+
 		// Only allow files that are less than 512MB in size
 		if (selectedFile.size >= 536870912) {
 			alert('This file is too large. Please select a file that is less than 512MB.');
@@ -104,6 +117,7 @@
 		const formData = new FormData();
 		formData.append('file', selectedFile);
 		formData.append('language', language);
+		formData.append('apiKey', apiKey);
 
 		const response = await fetch('/api/upload', {
 			method: 'POST',
@@ -409,6 +423,22 @@
 					</div>
 
 					<div class="space-y-6">
+						<div>
+							<Label for="api-key" class="mb-2 block text-sm font-medium text-slate-700">
+								Google API Key
+							</Label>
+							<Input
+								type="password"
+								bind:value={apiKey}
+								id="api-key"
+								placeholder="Enter your Google API key"
+								class="w-full rounded-lg border-2 border-indigo-200 bg-white/90 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm backdrop-blur-sm transition-all duration-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+							/>
+							<p class="mt-1 text-xs text-slate-500">
+								Your API key is stored locally in your browser and never sent to our servers except to make transcription requests.
+							</p>
+						</div>
+
 						<div>
 							<Label for="audio-file" class="mb-2 block text-sm font-medium text-slate-700">
 								Choose File

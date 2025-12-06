@@ -91,6 +91,7 @@ export async function POST(event) {
 	const nodeReadable = Readable.fromWeb(request.body as import('stream/web').ReadableStream);
 
 	let language = 'English';
+	let apiKey: string | null = null;
 	let uploadedFilePath: string | null = null;
 	let uploadedFileMime: string | undefined;
 	let tempFileHandle: FileResult | undefined;
@@ -107,6 +108,9 @@ export async function POST(event) {
 		busboy.on('field', (fieldname, value) => {
 			if (fieldname === 'language') {
 				language = value || 'English';
+			}
+			if (fieldname === 'apiKey') {
+				apiKey = value;
 			}
 		});
 
@@ -157,7 +161,12 @@ export async function POST(event) {
 		return new Response('No file uploaded', { status: 400 });
 	}
 
-	const ai = new GoogleGenAI({ apiKey: env.GOOGLE_API_KEY });
+	if (!apiKey) {
+		if (tempFileHandle) tempFileHandle.cleanup();
+		return new Response('API key is required', { status: 400 });
+	}
+
+	const ai = new GoogleGenAI({ apiKey });
 
 	let uploadResult;
 	try {
