@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gemini-transcribe-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # Note: GOOGLE_API_KEY is provided by user through the web UI
+    networks:
+      - gemini-transcribe
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {if (r.statusCode === 200) process.exit(0); else process.exit(1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: gemini-transcribe-nginx
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PORT:-8081}:80"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - gemini-transcribe
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: gemini-transcribe-cloudflared
+    profiles: ["cloudflare"]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TOKEN}
+    depends_on:
+      - nginx
+    networks:
+      - gemini-transcribe
+
+networks:
+  gemini-transcribe:
+    driver: bridge
