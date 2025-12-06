@@ -19,6 +19,8 @@
 	let transcriptSummary = '';
 	let isGeneratingSummary = false;
 
+	let summaryPrompt = `Please provide a comprehensive summary of this transcript in {language}. The summary should capture the key points, main topics discussed, and important conclusions. Make it concise but informative.`;
+
 	let audioElement: HTMLAudioElement | null = null;
 	let videoElement: HTMLVideoElement | null = null;
 	let copiedToClipboard = false;
@@ -27,6 +29,7 @@
 		if (typeof window !== 'undefined') {
 			language = localStorage.getItem('transcriptionLanguage') || 'English';
 			apiKey = localStorage.getItem('googleApiKey') || '';
+			summaryPrompt = localStorage.getItem('summaryPrompt') || summaryPrompt;
 		}
 		initialized = true;
 	});
@@ -37,6 +40,10 @@
 
 	$: if (apiKey !== undefined && typeof window !== 'undefined') {
 		localStorage.setItem('googleApiKey', apiKey);
+	}
+
+	$: if (summaryPrompt !== undefined && typeof window !== 'undefined') {
+		localStorage.setItem('summaryPrompt', summaryPrompt);
 	}
 
 	function handleTimestampClick(timestamp: string) {
@@ -191,7 +198,8 @@
 				body: JSON.stringify({
 					transcript: transcriptArray,
 					language: language,
-					apiKey: apiKey
+					apiKey: apiKey,
+					prompt: summaryPrompt
 				})
 			});
 
@@ -616,6 +624,29 @@
 
 			<!-- Summary Section -->
 			{#if transcriptArray.length > 0}
+				<!-- Summary Prompt Configuration -->
+				<div class="mb-8 rounded-xl border border-slate-200 bg-white/80 p-8 shadow-lg shadow-slate-500/10 backdrop-blur-sm">
+					<div class="mb-4">
+						<h3
+							class="mb-2 bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-xl font-bold text-transparent"
+						>
+							Summary Prompt
+						</h3>
+						<p class="text-sm text-slate-600">
+							Customize how the AI generates summaries. Use {language} to reference the selected language.
+						</p>
+					</div>
+					<textarea
+						bind:value={summaryPrompt}
+						rows="4"
+						class="w-full rounded-lg border-2 border-slate-200 bg-white/90 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 shadow-sm backdrop-blur-sm transition-all duration-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+						placeholder="Enter your custom summary prompt..."
+					/>
+					<p class="mt-2 text-xs text-slate-500">
+						Tips: Be specific about the summary style you want (e.g., "highlight action items", "create bullet points", "summarize in 3 paragraphs")
+					</p>
+				</div>
+
 				{#if transcriptSummary || isGeneratingSummary}
 					<div class="mb-8 rounded-xl border border-emerald-200 bg-white/80 p-8 shadow-xl shadow-emerald-500/10 backdrop-blur-sm">
 						<div class="mb-6 text-center">

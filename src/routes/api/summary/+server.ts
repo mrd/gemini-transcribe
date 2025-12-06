@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 
 export async function POST({ request }) {
 	try {
-		const { transcript, language, apiKey } = await request.json();
+		const { transcript, language, apiKey, prompt } = await request.json();
 
 		if (!apiKey) {
 			return new Response('API key is required', { status: 400 });
@@ -12,11 +12,17 @@ export async function POST({ request }) {
 			return new Response('Transcript is required', { status: 400 });
 		}
 
+		if (!prompt) {
+			return new Response('Summary prompt is required', { status: 400 });
+		}
+
 		const ai = new GoogleGenAI({ apiKey });
 
 		const transcriptText = transcript
 			.map((entry) => `[${entry.timestamp}] ${entry.speaker}: ${entry.text}`)
 			.join('\n\n');
+
+		const finalPrompt = prompt.replace('{language}', language) + '\n\n' + transcriptText;
 
 		const response = await ai.models.generateContent({
 			model: 'gemini-2.5-flash',
@@ -25,7 +31,7 @@ export async function POST({ request }) {
 					role: 'user',
 					parts: [
 						{
-							text: `Please provide a comprehensive summary of this transcript in ${language}. The summary should capture the key points, main topics discussed, and important conclusions. Make it concise but informative.\n\n${transcriptText}`
+							text: finalPrompt
 						}
 					]
 				}
