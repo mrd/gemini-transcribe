@@ -1,7 +1,14 @@
 FROM nginx:alpine
 
-COPY nginx.conf /etc/nginx/nginx.conf
+# Install apache2-utils for htpasswd
+RUN apk add --no-cache apache2-utils
 
-EXPOSE 80
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Create a script to generate htpasswd file from environment variables
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
