@@ -20,6 +20,7 @@
 	let isGeneratingSummary = false;
 
 	let summaryPrompt = `Please provide a comprehensive summary of this transcript in {language}. The summary should capture the key points, main topics discussed, and important conclusions. Make it concise but informative.`;
+	let lastSummaryPrompt = '';
 
 	let audioElement: HTMLAudioElement | null = null;
 	let videoElement: HTMLVideoElement | null = null;
@@ -209,6 +210,7 @@
 
 			const data = await response.json();
 			transcriptSummary = data.summary;
+			lastSummaryPrompt = summaryPrompt;
 		} catch (error) {
 			console.error('Error generating summary:', error);
 			errorMessage = 'Failed to generate summary. You can try again.';
@@ -259,6 +261,7 @@
 		streamBuffer = '';
 		transcriptArray = [];
 		transcriptSummary = '';
+		lastSummaryPrompt = '';
 		errorMessage = null;
 		if (audioElement) {
 			audioElement.currentTime = 0;
@@ -649,13 +652,31 @@
 
 				{#if transcriptSummary || isGeneratingSummary}
 					<div class="mb-8 rounded-xl border border-emerald-200 bg-white/80 p-8 shadow-xl shadow-emerald-500/10 backdrop-blur-sm">
-						<div class="mb-6 text-center">
-							<h3
-								class="mb-2 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-2xl font-bold text-transparent"
-							>
-								Summary
-							</h3>
-							<p class="text-slate-600">AI-generated summary of the transcript</p>
+						<div class="mb-4 flex items-center justify-between">
+							<div class="text-center flex-1">
+								<h3
+									class="mb-2 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-2xl font-bold text-transparent"
+								>
+									Summary
+								</h3>
+								<p class="text-slate-600">AI-generated summary of the transcript</p>
+							</div>
+							{#if transcriptSummary && summaryPrompt !== lastSummaryPrompt && !isGeneratingSummary}
+								<button
+									on:click={generateSummary}
+									class="ml-4 inline-flex items-center space-x-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/40"
+								>
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+										/>
+									</svg>
+									<span>Regenerate</span>
+								</button>
+							{/if}
 						</div>
 
 						{#if isGeneratingSummary}
