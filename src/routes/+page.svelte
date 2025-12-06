@@ -16,6 +16,9 @@
 	let initialized = false;
 	let errorMessage: string | null = null;
 
+	let transcriptSummary = '';
+	let isGeneratingSummary = false;
+
 	let audioElement: HTMLAudioElement | null = null;
 	let videoElement: HTMLVideoElement | null = null;
 	let copiedToClipboard = false;
@@ -173,6 +176,39 @@
 		}
 	}
 
+	async function generateSummary() {
+		if (!transcriptArray.length || !apiKey.trim()) return;
+
+		isGeneratingSummary = true;
+		errorMessage = null;
+
+		try {
+			const response = await fetch('/api/summary', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					transcript: transcriptArray,
+					language: language,
+					apiKey: apiKey
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error(await response.text());
+			}
+
+			const data = await response.json();
+			transcriptSummary = data.summary;
+		} catch (error) {
+			console.error('Error generating summary:', error);
+			errorMessage = 'Failed to generate summary. You can try again.';
+		} finally {
+			isGeneratingSummary = false;
+		}
+	}
+
 	async function downloadTranscript({ timestamps = true } = {}) {
 		const response = await fetch('/api/download', {
 			method: 'POST',
@@ -214,6 +250,7 @@
 		fileUrl = null;
 		streamBuffer = '';
 		transcriptArray = [];
+		transcriptSummary = '';
 		errorMessage = null;
 		if (audioElement) {
 			audioElement.currentTime = 0;
@@ -575,6 +612,70 @@
 						{/if}
 					</div>
 				</div>
+			{/if}
+
+			<!-- Summary Section -->
+			{#if transcriptArray.length > 0}
+				{#if transcriptSummary || isGeneratingSummary}
+					<div class="mb-8 rounded-xl border border-emerald-200 bg-white/80 p-8 shadow-xl shadow-emerald-500/10 backdrop-blur-sm">
+						<div class="mb-6 text-center">
+							<h3
+								class="mb-2 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-2xl font-bold text-transparent"
+							>
+								Summary
+							</h3>
+							<p class="text-slate-600">AI-generated summary of the transcript</p>
+						</div>
+
+						{#if isGeneratingSummary}
+							<div class="text-center">
+								<div class="inline-flex items-center space-x-2 text-emerald-600">
+									<svg
+										class="h-5 w-5 animate-spin"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+										/>
+									</svg>
+									<span class="font-medium">Generating summary...</span>
+								</div>
+							</div>
+						{:else}
+							<div class="prose prose-slate max-w-none">
+								<p class="text-slate-700 leading-relaxed">{transcriptSummary}</p>
+							</div>
+						{/if}
+					</div>
+				{:else}
+					<div class="mb-8 rounded-xl border border-slate-200 bg-white/80 p-8 shadow-lg shadow-slate-500/10 backdrop-blur-sm">
+						<div class="text-center">
+							<button
+								on:click={generateSummary}
+								disabled={isGeneratingSummary}
+								class="inline-flex items-center space-x-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:transform-none"
+							>
+								<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+									/>
+								</svg>
+								<span>Generate Summary</span>
+							</button>
+							<p class="mt-3 text-sm text-slate-500">
+								Create an AI-powered summary of your transcript
+							</p>
+						</div>
+					</div>
+				{/if}
 			{/if}
 
 			<!-- Transcript Display -->
