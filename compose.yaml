@@ -11,6 +11,8 @@ services:
       - BODY_SIZE_LIMIT=536870912
       - HTTPS_PROXY=${HTTPS_PROXY:-}
       - HTTP_PROXY=${HTTP_PROXY:-}
+      - HOST=127.0.0.1
+      - PORT=3000
       # Note: GOOGLE_API_KEY is provided by user through the web UI
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {if (r.statusCode === 200) process.exit(0); else process.exit(1)})"]
@@ -39,7 +41,7 @@ services:
     profiles: ["cloudflare"]
     restart: unless-stopped
     network_mode: host
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
+    command: tunnel --no-autoupdate --metrics localhost:20241 run --token ${CLOUDFLARE_TOKEN}
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TOKEN}
     depends_on:

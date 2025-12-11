@@ -13,7 +13,7 @@ fi
 # Replace PORT placeholder in nginx config if PORT env var is set
 if [ -n "$PORT" ]; then
     echo "Configuring nginx to listen on port $PORT..."
-    sed -i "s/listen 8081;/listen $PORT;/g" /etc/nginx/conf.d/default.conf
+    sed -i "s/listen 127.0.0.1:8081;/listen 127.0.0.1:$PORT;/g" /etc/nginx/conf.d/default.conf
 fi
 
 # Execute the CMD
