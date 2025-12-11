@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { marked } from 'marked';
 
 	let selectedFile: File | null = null;
 	let uploadComplete = false;
@@ -22,8 +21,6 @@
 
 	let summaryPrompt = `Please provide a comprehensive summary of this transcript in {language}. The summary should capture the key points, main topics discussed, and important conclusions. Make it concise but informative.`;
 	let lastSummaryPrompt = '';
-
-	$: summaryHtml = transcriptSummary ? marked(transcriptSummary) : '';
 
 	let audioElement: HTMLAudioElement | null = null;
 	let videoElement: HTMLVideoElement | null = null;
@@ -702,9 +699,12 @@
 								</div>
 							</div>
 						{:else}
-							<div class="prose prose-slate max-w-none text-slate-700 leading-relaxed">
-								{@html summaryHtml}
-							</div>
+							<textarea
+								bind:value={transcriptSummary}
+								rows="12"
+								class="w-full rounded-lg border-2 border-slate-200 bg-white/90 px-4 py-3 text-sm text-slate-800 shadow-sm backdrop-blur-sm transition-all duration-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+								readonly
+							/>
 						{/if}
 					</div>
 				{:else}
