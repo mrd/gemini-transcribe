@@ -12,6 +12,8 @@
 	let streamBuffer = '';
 	let transcriptArray: Array<{ timestamp: string; speaker: string; text: string }> = [];
 	let language = 'English';
+	let languageOption: 'dutch' | 'english' | 'other' = 'english';
+	let customLanguage = '';
 	let apiKey = '';
 	let initialized = false;
 	let errorMessage: string | null = null;
@@ -31,9 +33,30 @@
 			language = localStorage.getItem('transcriptionLanguage') || 'English';
 			apiKey = localStorage.getItem('googleApiKey') || '';
 			summaryPrompt = localStorage.getItem('summaryPrompt') || summaryPrompt;
+
+			// Set initial radio button state based on stored language
+			if (language === 'Dutch') {
+				languageOption = 'dutch';
+			} else if (language === 'English') {
+				languageOption = 'english';
+			} else {
+				languageOption = 'other';
+				customLanguage = language;
+			}
 		}
 		initialized = true;
 	});
+
+	// Update language based on radio selection
+	$: {
+		if (languageOption === 'dutch') {
+			language = 'Dutch';
+		} else if (languageOption === 'english') {
+			language = 'English';
+		} else if (languageOption === 'other') {
+			language = customLanguage || '';
+		}
+	}
 
 	$: if (initialized && typeof window !== 'undefined') {
 		localStorage.setItem('transcriptionLanguage', language);
@@ -503,16 +526,48 @@
 						</div>
 
 						<div>
-							<Label for="language" class="mb-2 block text-sm font-medium text-slate-700">
+							<Label class="mb-3 block text-sm font-medium text-slate-700">
 								Language of Transcript
 							</Label>
-							<Input
-								type="text"
-								bind:value={language}
-								id="language"
-								placeholder="Enter language (e.g., English, Spanish)"
-								class="w-full rounded-lg border-2 border-indigo-200 bg-white/90 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm backdrop-blur-sm transition-all duration-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-							/>
+							<div class="space-y-3">
+								<label class="flex items-center space-x-3 cursor-pointer">
+									<input
+										type="radio"
+										bind:group={languageOption}
+										value="dutch"
+										class="h-4 w-4 border-indigo-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500/20"
+									/>
+									<span class="text-slate-700">Dutch</span>
+								</label>
+								<label class="flex items-center space-x-3 cursor-pointer">
+									<input
+										type="radio"
+										bind:group={languageOption}
+										value="english"
+										class="h-4 w-4 border-indigo-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500/20"
+									/>
+									<span class="text-slate-700">English</span>
+								</label>
+								<div>
+									<label class="flex items-center space-x-3 cursor-pointer mb-2">
+										<input
+											type="radio"
+											bind:group={languageOption}
+											value="other"
+											class="h-4 w-4 border-indigo-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500/20"
+										/>
+										<span class="text-slate-700">Other</span>
+									</label>
+									{#if languageOption === 'other'}
+										<Input
+											type="text"
+											bind:value={customLanguage}
+											placeholder="Enter language (e.g., Spanish, French)"
+											class="ml-7 w-full rounded-lg border-2 border-indigo-200 bg-white/90 px-4 py-2 text-slate-800 placeholder-slate-400 shadow-sm backdrop-blur-sm transition-all duration-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+										/>
+									{/if}
+								</div>
+							</div>
 						</div>
 
 						{#if errorMessage}
