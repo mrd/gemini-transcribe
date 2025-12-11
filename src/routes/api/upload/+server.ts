@@ -6,6 +6,8 @@ import { env } from '$env/dynamic/private';
 import { safetySettings } from '$lib/index';
 import { Readable } from 'node:stream';
 import Busboy from 'busboy';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 
 // Rate limiting disabled for now
 // const requests = new Map<string, { count: number; expires: number }>();
@@ -166,7 +168,23 @@ export async function POST(event) {
 		return new Response('API key is required', { status: 400 });
 	}
 
-	const ai = new GoogleGenAI({ apiKey });
+	// Configure proxy if HTTPS_PROXY or HTTP_PROXY environment variable is set
+	const proxyUrl = env.HTTPS_PROXY || env.HTTP_PROXY || process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+	const fetchOptions: any = {};
+
+	if (proxyUrl) {
+		console.log('Using proxy:', proxyUrl);
+		// Support both HTTP/HTTPS and SOCKS5 proxies
+		const agent = proxyUrl.startsWith('socks')
+			? new SocksProxyAgent(proxyUrl)
+			: new HttpsProxyAgent(proxyUrl);
+		fetchOptions.agent = agent;
+	}
+
+	const ai = new GoogleGenAI({
+		apiKey,
+		...(Object.keys(fetchOptions).length > 0 ? { fetchOptions } : {})
+	});
 
 	let uploadResult;
 	try {

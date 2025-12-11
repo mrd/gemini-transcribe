@@ -40,7 +40,9 @@
 		"bits-ui": "^0.21.13",
 		"busboy": "^1.6.0",
 		"clsx": "^2.1.1",
+		"https-proxy-agent": "^7.0.6",
 		"jsonrepair": "^3.9.0",
+		"socks-proxy-agent": "^8.0.5",
 		"tailwind-merge": "^2.5.2",
 		"tailwind-variants": "^0.2.1",
 		"tmp-promise": "^3.0.3"

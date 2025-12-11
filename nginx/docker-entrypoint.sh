@@ -10,5 +10,11 @@ else
     htpasswd -bc /etc/nginx/.htpasswd "admin" "admin"
 fi
 
+# Replace PORT placeholder in nginx config if PORT env var is set
+if [ -n "$PORT" ]; then
+    echo "Configuring nginx to listen on port $PORT..."
+    sed -i "s/listen 8081;/listen $PORT;/g" /etc/nginx/conf.d/default.conf
+fi
+
 # Execute the CMD
 exec "$@"
